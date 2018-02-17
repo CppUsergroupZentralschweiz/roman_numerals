@@ -1,0 +1,15 @@
+#ifndef ROMAN_NUMERALS_VERSION_H_
+#define ROMAN_NUMERALS_VERSION_H_
+
+#include <string>
+
+namespace roman_numerals {
+
+// the configured options and settings for the Project
+const auto version_major = "@PROJECT_VERSION_MAJOR@";
+const auto version_minor = "@PROJECT_VERSION_MINOR@";
+const auto version_patch = "@PROJECT_VERSION_PATCH@";
+
+} // namespace roman_numerals
+
+#endif // ROMAN_NUMERALS_VERSION_H_
