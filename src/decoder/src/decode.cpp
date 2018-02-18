@@ -5,8 +5,6 @@
 #include <map>
 #include <algorithm>
 
-using namespace std::string_literals;
-
 namespace roman_numerals {
 
 uint32_t from_roman(const std::string& roman) {

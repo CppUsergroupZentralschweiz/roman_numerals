@@ -4,8 +4,6 @@
 #include <algorithm>
 #include <vector>
 
-using namespace std::string_literals;
-
 namespace roman_numerals {
 
 namespace {
@@ -61,11 +59,11 @@ bool check_consecutive_equals(const std::string& roman) {
 bool check_sum_smaller_denominations(const std::string& roman) {
     auto prev = 0u;
     auto roman_reverse = roman;
-    auto arabic = 0u;
+    auto arabic = 0;
     std::reverse(roman_reverse.begin(), roman_reverse.end());
     auto next_decimal = to_arabic_mapping.at(roman_reverse.at(0)) * 10;
     for (const auto& numeral: roman_reverse) {
-        const auto inc = to_arabic_mapping.at(numeral);
+        const int32_t inc = to_arabic_mapping.at(numeral);
         if (inc >= next_decimal) {
             arabic = 0;
             next_decimal = inc % next_decimal == 0 ? inc * 10 : inc + inc;
