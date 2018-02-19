@@ -54,7 +54,7 @@ function(register_catchtest TEST_FILE)
     add_executable(${TEST_NAME}
             EXCLUDE_FROM_ALL
             ${TEST_FILE}.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp
+            src/main.cpp
             )
 
     target_link_libraries(${TEST_NAME}
@@ -80,7 +80,7 @@ register_catchtest(src/validator_test)
 
 add_executable(validator_unittests
         ${CATCHTEST_SOURCES}
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp
+        src/main.cpp
         )
 
 add_executable(validator_tests::unit ALIAS validator_unittests)

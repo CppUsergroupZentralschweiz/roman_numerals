@@ -17,21 +17,15 @@ include(clang)
 
 add_library(roman_encoder_lib STATIC
         #  EXCLUDE_FROM_ALL
-        ""
+        src/encode.cpp
         )
 
 # define alias
 add_library(roman::encoder_lib ALIAS roman_encoder_lib)
 
-# add source files
-target_sources(roman_encoder_lib
-        PRIVATE
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/encode.cpp"
-        )
-
 target_include_directories(roman_encoder_lib
         PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include/roman_encoder
+        include/roman_encoder
         PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>

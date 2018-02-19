@@ -17,21 +17,15 @@ include(clang)
 
 add_library(roman_validator_lib STATIC
         #  EXCLUDE_FROM_ALL
-        ""
+        src/roman_numeral_validator.cpp
         )
 
 # define alias
 add_library(roman::validator_lib ALIAS roman_validator_lib)
 
-# add source files
-target_sources(roman_validator_lib
-        PRIVATE
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/roman_numeral_validator.cpp"
-        )
-
 target_include_directories(roman_validator_lib
         PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include/roman_validator
+        include/roman_validator
         PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>

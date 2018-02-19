@@ -17,23 +17,17 @@ include(clang)
 
 add_library(roman_decoder_lib STATIC
         #  EXCLUDE_FROM_ALL
-        ""
+        src/decode.cpp
         )
 
 # define alias
 add_library(roman::decoder_lib ALIAS roman_decoder_lib)
 
-# add source files
-target_sources(roman_decoder_lib
-        PRIVATE
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/decode.cpp"
-        )
-
 target_include_directories(roman_decoder_lib
         PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include/roman_decoder
+        include/roman_decoder
         PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/$include>
         $<INSTALL_INTERFACE:include>
         )
 

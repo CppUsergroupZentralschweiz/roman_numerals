@@ -21,12 +21,12 @@ include(clang)
 
 # configure a header file to pass the version number to the source code
 configure_file(
-        "${CMAKE_CURRENT_SOURCE_DIR}/roman_numerals_version.h.in"
-        "${CMAKE_CURRENT_SOURCE_DIR}/include/roman_numerals_version.h"
+        roman_numerals_version.h.in
+        include/roman_numerals_version.h
 )
 
 add_executable(${PROJECT_NAME}
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp
+        src/main.cpp
         )
 
 add_executable(${PROJECT_NAME}::exe ALIAS ${PROJECT_NAME})
@@ -50,7 +50,7 @@ target_link_libraries(${PROJECT_NAME}
 
 target_include_directories(${PROJECT_NAME}
         PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        include
         )
 
 if (NOT ${MSVC})
