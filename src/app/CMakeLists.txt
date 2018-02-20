@@ -66,8 +66,7 @@ endif (NOT ${MSVC})
 
 target_compile_options(${PROJECT_NAME}
         PRIVATE
-        $<$<BOOL:${UNIX}>:-fPIC>
-        $<$<BOOL:${MSVC}>:/analyze;/Za>
+        $<$<BOOL:${MSVC}>:/analyze;/Wall>
         )
 
 #

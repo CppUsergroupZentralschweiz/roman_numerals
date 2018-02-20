@@ -120,37 +120,26 @@ target_compile_options(decoder_unittests
         $<$<BOOL:${MSVC}>:/analyze;/Za>
         )
 
-if (CLANG_TIDY_EXE AND NOT CMAKE_COMPILER_IS_GNUCXX)
-    set_target_properties(
-            decoder_unittests
-            PROPERTIES
-            CXX_CLANG_TIDY "${CLANG_TIDY_PROPERTIES}"
-    )
-endif ()
-
-add_dependencies(decoder_unittests catch)
-
 # Target: run tests
 add_custom_target(run_decoder_unittests
         ALL # run the test always for target all
         decoder_tests::unit --order rand
-        DEPENDS decoder_tests::unit
         )
 
 # Target: run tests with junit output
 add_custom_target(run_decoder_unittests_junit
         decoder_tests::unit -r junit;-o ${TESTS_REPORT_DIR}/unit-tests.xml
-        DEPENDS decoder_tests::unit
         )
 
-if (CMAKE_BUILD_TYPE MATCHES Debug AND NOT ${MSVC})
+find_program(GCOV_PATH gcov)
+
+if (GCOV_PATH AND NOT MSVC AND CMAKE_BUILD_TYPE MATCHES Debug)
     include(CodeCoverage)
     if (COVERAGE_XML)
         setup_target_for_coverage_cobertura(
                 NAME coverage_decoder_unittests_cobertura
                 EXECUTABLE decoder_tests::unit
                 OUTPUTNAME ${COVERAGE_REPORT_DIR}/decoder_unittests
-                DEPENDENCIES decoder_tests::unit
         )
 
         if (NOT TARGET coverage_decoder)
@@ -165,11 +154,10 @@ if (CMAKE_BUILD_TYPE MATCHES Debug AND NOT ${MSVC})
                 NAME coverage_decoder_unittests
                 EXECUTABLE decoder_tests::unit
                 OUTPUTNAME ${COVERAGE_REPORT_DIR}/decoder_unittests
-                DEPENDENCIES decoder_tests::unit
         )
         if (NOT TARGET coverage_decoder)
             add_custom_target(coverage_decoder)
         endif (NOT TARGET coverage_decoder)
         add_dependencies(coverage_decoder coverage_decoder_unittests)
     endif (COVERAGE_HTML)
-endif (CMAKE_BUILD_TYPE MATCHES Debug AND NOT ${MSVC})
+endif (GCOV_PATH AND NOT MSVC AND CMAKE_BUILD_TYPE MATCHES Debug)

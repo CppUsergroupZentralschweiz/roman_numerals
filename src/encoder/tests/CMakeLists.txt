@@ -135,16 +135,16 @@ add_dependencies(encoder_unittests catch)
 add_custom_target(run_encoder_unittests
         ALL # run the test always for target all
         encoder_tests::unit --order rand
-        DEPENDS encoder_tests::unit
         )
 
 # Target: run tests with junit output
 add_custom_target(run_encoder_unittests_junit
         encoder_tests::unit -r junit;-o ${TESTS_REPORT_DIR}/unit-tests.xml
-        DEPENDS encoder_tests::unit
         )
 
-if (CMAKE_BUILD_TYPE MATCHES Debug AND NOT ${MSVC})
+find_program(GCOV_PATH gcov)
+
+if (GCOV_PATH AND NOT MSVC AND CMAKE_BUILD_TYPE MATCHES Debug)
     include(CodeCoverage)
     if (COVERAGE_XML)
         setup_target_for_coverage_cobertura(
@@ -171,4 +171,4 @@ if (CMAKE_BUILD_TYPE MATCHES Debug AND NOT ${MSVC})
         endif (NOT TARGET coverage_encoder)
         add_dependencies(coverage_encoder coverage_encoder_unittests)
     endif (COVERAGE_HTML)
-endif (CMAKE_BUILD_TYPE MATCHES Debug AND NOT ${MSVC})
+endif (GCOV_PATH AND NOT MSVC AND CMAKE_BUILD_TYPE MATCHES Debug)

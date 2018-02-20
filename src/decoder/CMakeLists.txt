@@ -27,7 +27,7 @@ target_include_directories(roman_decoder_lib
         PRIVATE
         include/roman_decoder
         PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/$include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
         )
 
@@ -48,23 +48,16 @@ if (NOT ${MSVC})
 endif (NOT ${MSVC})
 
 target_compile_options(roman_decoder_lib
+        PUBLIC
+        $<$<BOOL:${MSVC}>:/Za>
         PRIVATE
-        $<$<BOOL:${MSVC}>:/analyze;/Za>
+        $<$<BOOL:${MSVC}>:/analyze;/Wall>
         )
 
 target_compile_definitions(roman_decoder_lib
         PUBLIC
-        "$<$<BOOL:${MSVC}>:WINVER=0x0A00;_WIN32_WINNT=0x0A00;>"
+        #   $<$<BOOL:${WIN32}>:WINVER=0x0A00;_WIN32_WINNT=0x0A00>
         )
-
-
-if (CPPCHECK_EXE AND ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} GREATER 3.9)
-    set_target_properties(
-            roman_decoder_lib
-            PROPERTIES
-            CXX_CPPCHECK "${CPPCHECK_PROPERTIES}"
-    )
-endif ()
 
 if (CLANG_TIDY_EXE AND NOT CMAKE_COMPILER_IS_GNUCXX)
     set_target_properties(
@@ -74,12 +67,12 @@ if (CLANG_TIDY_EXE AND NOT CMAKE_COMPILER_IS_GNUCXX)
     )
 endif ()
 
-if (CMAKE_BUILD_TYPE MATCHES Debug AND NOT ${MSVC})
+find_program(GCOV_PATH gcov)
+
+if (GCOV_PATH AND NOT MSVC)
     include(CodeCoverage)
-    if (${COVERAGE_XML} OR ${COVERAGE_HTML})
-        enable_coverage(roman_decoder_lib)
-    endif (${COVERAGE_XML} OR ${COVERAGE_HTML})
-endif (CMAKE_BUILD_TYPE MATCHES Debug AND NOT ${MSVC})
+    enable_coverage(roman_decoder_lib)
+endif (GCOV_PATH AND NOT MSVC)
 
 add_subdirectory(tests)
 
