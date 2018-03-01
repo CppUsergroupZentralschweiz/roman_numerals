@@ -59,14 +59,20 @@ set(APPLICATION_NAME ${PROJECT_NAME})
 
 include(CMakeInstallation.cmake)
 
+if(CMAKE_GENERATOR MATCHES "Make")
+    set(MAKE "$(MAKE)")
+else()
+    set(MAKE make)
+endif()
+
 add_custom_target(install_${PROJECT_NAME}
-    $(MAKE) install
+    ${MAKE} install
     DEPENDS ${PROJECT_NAME}
     COMMENT "Installing ${PROJECT_NAME}"
     )
 
 add_custom_target(package_${PROJECT_NAME}
-    $(MAKE) package
+    ${MAKE} package
     DEPENDS ${PROJECT_NAME}
     COMMENT "Packaging ${PROJECT_NAME}"
     )
