@@ -46,7 +46,7 @@ if(NOT CATCH_VERSION OR CATCH_VERSION VERSION_LESS ${Catch_FIND_VERSION})
     include(ExternalProject)
 
     if(NOT TARGET catch)
-        ExternalProject_Add(catch
+        externalproject_add(catch
             URL https://github.com/catchorg/Catch2/archive/v${Catch_FIND_VERSION}.tar.gz
             PREFIX ${CMAKE_BINARY_DIR}/catch2-v${Catch_FIND_VERSION}
             TIMEOUT 10
@@ -58,7 +58,7 @@ if(NOT CATCH_VERSION OR CATCH_VERSION VERSION_LESS ${Catch_FIND_VERSION})
             )
     endif(NOT TARGET catch)
 
-    ExternalProject_Get_Property(catch source_dir)
+    externalproject_get_property(catch source_dir)
     set(Catch_INCLUDE_DIR ${source_dir}/single_include CACHE INTERNAL "Path to include folder for Catch")
     file(MAKE_DIRECTORY ${Catch_INCLUDE_DIR})
     mark_as_advanced(Catch_INCLUDE_DIR)
@@ -70,6 +70,7 @@ if(NOT TARGET Catch::catch)
     if(EXISTS "${Catch_INCLUDE_DIR}")
         set_target_properties(Catch::catch PROPERTIES
             INTERFACE_INCLUDE_DIRECTORIES "${Catch_INCLUDE_DIR}"
+            INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${Catch_INCLUDE_DIR}"
             )
     endif()
     set_target_properties(Catch::catch PROPERTIES

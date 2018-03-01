@@ -4,6 +4,7 @@
 
 #include <map>
 #include <algorithm>
+#include <ciso646>
 
 namespace roman_numerals {
 

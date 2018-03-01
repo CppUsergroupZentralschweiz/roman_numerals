@@ -70,7 +70,12 @@ endif(NOT MSVC)
 
 target_compile_options(decoder_unittests
     PRIVATE
-    $<$<BOOL:${MSVC}>:/analyze;/Za>
+    $<$<BOOL:${MSVC}>:/analyze;/W4>
+    )
+
+target_compile_definitions(decoder_unittests
+    PRIVATE
+    $<$<BOOL:${WIN32}>:WINVER=0x0A00;_WIN32_WINNT=0x0A00>
     )
 
 # Target: run tests

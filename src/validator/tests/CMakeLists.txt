@@ -69,7 +69,12 @@ endif(NOT MSVC)
 
 target_compile_options(validator_unittests
     PRIVATE
-    $<$<BOOL:${MSVC}>:/analyze;/Za>
+    $<$<BOOL:${MSVC}>:/analyze;/W4>
+    )
+
+target_compile_definitions(validator_unittests
+    PRIVATE
+    $<$<BOOL:${WIN32}>:WINVER=0x0A00;_WIN32_WINNT=0x0A00>
     )
 
 if(CLANG_TIDY_EXE AND NOT CMAKE_COMPILER_IS_GNUCXX)

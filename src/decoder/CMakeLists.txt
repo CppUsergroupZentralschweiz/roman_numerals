@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.6 FATAL_ERROR)
 
 # Set a project name in case only this library is built
 if(NOT PROJECT_NAME)
-    project(roman_decoder_lib VERSION 0.0.1 LANGUAGES CXX C)
+    project(roman_decoder_lib VERSION 0.0.1 LANGUAGES CXX)
 endif(NOT PROJECT_NAME)
 
 # set the path to the additional cmake modules
@@ -46,15 +46,8 @@ if(NOT MSVC)
 endif(NOT MSVC)
 
 target_compile_options(roman_decoder_lib
-    PUBLIC
-    $<$<BOOL:${MSVC}>:/Za>
     PRIVATE
-    $<$<BOOL:${MSVC}>:/analyze;/Wall>
-    )
-
-target_compile_definitions(roman_decoder_lib
-    PUBLIC
-    $<$<BOOL:${WIN32}>:WINVER=0x0A00;_WIN32_WINNT=0x0A00>
+    $<$<BOOL:${MSVC}>:/analyze;/W4>
     )
 
 if(CLANG_TIDY_EXE AND NOT CMAKE_COMPILER_IS_GNUCXX)

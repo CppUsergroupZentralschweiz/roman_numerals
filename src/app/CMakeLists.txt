@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.6 FATAL_ERROR)
 
 # Set a project name in case only this library is built
 if(NOT PROJECT_NAME)
-    project(roman_numerals VERSION 0.0.1 LANGUAGES CXX C)
+    project(roman_numerals VERSION 0.0.1 LANGUAGES CXX)
 endif(NOT PROJECT_NAME)
 
 # set the path to the additional cmake modules
@@ -60,24 +60,32 @@ endif(NOT MSVC)
 
 target_compile_options(${PROJECT_NAME}
     PRIVATE
-    $<$<BOOL:${MSVC}>:/analyze;/Wall>
+    $<$<BOOL:${MSVC}>:/analyze;/W4>
     )
 
+target_compile_definitions(${PROJECT_NAME}
+    PRIVATE
+    $<$<BOOL:${WIN32}>:WINVER=0x0A00;_WIN32_WINNT=0x0A00>
+    )
 #
 # with Boost
 #
 option(USE_STATIC_BOOST "Statically link Boost" ${WIN32})
 
 if(NOT BOOST_VERSION)
-    if(${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} GREATER 3.9)
+    if(${CMAKE_MINOR_VERSION} GREATER 9)
         set(BOOST_VER_STRING "1.66.0")
-    elseif(${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} LESS 3.9)
+        set(BOOST_SHA1_HASH "b6b284acde2ad7ed49b44e856955d7b1ea4e9459")
+    elseif(${CMAKE_MINOR_VERSION} LESS 9)
         set(BOOST_VER_STRING "1.61.0")
+        set(BOOST_SHA1_HASH "2d2b80771f584f327827193fcf3abf836edcdfaa")
     else()
-        set(BOOST_VER_STRING "1.65.0")
+        set(BOOST_VER_STRING "1.65.1")
+        set(BOOST_SHA1_HASH "362fb9389734cfd57cea80b221516b88b6819eb5")
     endif()
 
     set(BOOST_VERSION ${BOOST_VER_STRING} CACHE STRING "Define Boost version")
+    set(BOOST_HASH SHA1=${BOOST_SHA1_HASH} CACHE STRING "Define Download Hashs")
 endif(NOT BOOST_VERSION)
 
 target_compile_definitions(${PROJECT_NAME}
@@ -88,7 +96,6 @@ target_compile_definitions(${PROJECT_NAME}
 if(USE_STATIC_BOOST)
     set(Boost_USE_STATIC_LIBS ON)
 endif(USE_STATIC_BOOST)
-
 
 set(Boost_Components ${Boost_Components} program_options)
 

@@ -4,7 +4,7 @@
 cmake_minimum_required(VERSION 3.6 FATAL_ERROR)
 
 # project name and version
-project(roman_numerals VERSION 0.0.1 LANGUAGES CXX C)
+project(roman_numerals VERSION 0.0.1 LANGUAGES CXX)
 
 option(DISABLE_BOOST_DOWNLOAD "Disable download of boost" FALSE)
 

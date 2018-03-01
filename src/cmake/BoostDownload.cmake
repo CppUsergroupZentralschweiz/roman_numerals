@@ -3,23 +3,27 @@ if(NOT DISABLE_BOOST_DOWNLOAD)
     include(ExternalProject)
 
     if(WIN32)
-        set(SCRIPT_SUFFIX .bat)
-        set(EXE_SUFFIX .exe)
+        set(SCRIPT_SUFFIX ".bat")
+        set(EXE_SUFFIX ".exe")
     else(WIN32)
-        set(SCRIPT_SUFFIX .sh)
+        set(SCRIPT_SUFFIX ".sh")
         set(EXE_SUFFIX "")
     endif(WIN32)
 
     if(NOT BOOST_VERSION)
-        if(${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} GREATER 3.9)
+        if(${CMAKE_MINOR_VERSION} GREATER 9)
             set(BOOST_VER_STRING "1.66.0")
-        elseif(${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} LESS 3.9)
+            set(BOOST_SHA1_HASH "b6b284acde2ad7ed49b44e856955d7b1ea4e9459")
+        elseif(${CMAKE_MINOR_VERSION} LESS 9)
             set(BOOST_VER_STRING "1.61.0")
+            set(BOOST_SHA1_HASH "2d2b80771f584f327827193fcf3abf836edcdfaa")
         else()
-            set(BOOST_VER_STRING "1.65.0")
+            set(BOOST_VER_STRING "1.65.1")
+            set(BOOST_SHA1_HASH "362fb9389734cfd57cea80b221516b88b6819eb5")
         endif()
 
         set(BOOST_VERSION ${BOOST_VER_STRING} CACHE STRING "Define Boost version")
+        set(BOOST_HASH SHA1=${BOOST_SHA1_HASH} CACHE STRING "Define Download Hashs")
     endif(NOT BOOST_VERSION)
 
     string(REPLACE "." "_" Boost_Version_Underscore ${BOOST_VERSION})
@@ -49,11 +53,15 @@ if(NOT DISABLE_BOOST_DOWNLOAD)
         set(BOOST_LINK "shared,static")
     endif(USE_STATIC_BOOST)
 
-    if(MSVC12)
-        set(BOOST_TOOLSET_BUILD "toolset=msvc-12.0")
-    elseif(MSVC14)
-        set(BOOST_TOOLSET_BUILD "toolset=msvc-14.0")
-    endif(MSVC12)
+    if(MSVC_VERSION)
+        if(${MSVC_VERSION} EQUAL "1800")
+            set(BOOST_TOOLSET_BUILD "toolset=msvc-12.0")
+        elseif(${MSVC_VERSION} EQUAL "1900")
+            set(BOOST_TOOLSET_BUILD "toolset=msvc-14.0")
+        elseif(${MSVC_VERSION} EQUAL "1910")
+            set(BOOST_TOOLSET_BUILD "toolset=msvc-14.1")
+        endif(${MSVC_VERSION} EQUAL "1800")
+    endif(MSVC_VERSION)
 
     # Use the same compiler for building boost as for your own project
     if(CMAKE_COMPILER_IS_GNUCXX AND WIN32)
@@ -81,8 +89,9 @@ if(NOT DISABLE_BOOST_DOWNLOAD)
     endif(CMAKE_CL_64)
 
     if(NOT TARGET boost_external)
-        ExternalProject_Add(boost_external
+        externalproject_add(boost_external
             URL https://downloads.sourceforge.net/project/boost/boost/${BOOST_VERSION}/boost_${Boost_Version_Underscore}.tar.bz2
+            URL_HASH ${BOOST_HASH}
             PREFIX boost
             INSTALL_DIR ${boost_INSTALL}
             LOG_DOWNLOAD ON
@@ -110,8 +119,8 @@ if(NOT DISABLE_BOOST_DOWNLOAD)
 
         if(MSVC)
             string(REPLACE "_0" "" Boost_Version_Shorten ${Boost_Version_Underscore})
-            ExternalProject_Add_Step(boost_external MoveHeaders
-                COMMAND ${CMAKE_COMMAND} -E copy_directory ${boost_INCLUDE_DIR}/boost-${Boost_Version_Shorten}/boost ${EXT_INSTALL_INCLUDE_DIR}/boost
+            externalproject_add_step(boost_external MoveHeaders
+                COMMAND ${CMAKE_COMMAND} -E copy_directory ${boost_INCLUDE_DIR}/boost-${Boost_Version_Shorten}/boost ${boost_INCLUDE_DIR}/boost
                 COMMAND ${CMAKE_COMMAND} -E remove_directory ${boost_INCLUDE_DIR}/boost-${Boost_Version_Shorten}
                 COMMENT "Move boost headers..."
                 DEPENDEES install
@@ -119,7 +128,7 @@ if(NOT DISABLE_BOOST_DOWNLOAD)
         endif(MSVC)
 
         if(MINGW)
-            ExternalProject_Add_Step(boost_external FixBoostProjectConfig
+            externalproject_add_step(boost_external FixBoostProjectConfig
                 COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_LIST_DIR}/../scripts/fix_boost_project-config_for_mingw.bat <BINARY_DIR>
                 COMMAND ${CMAKE_COMMAND} -E chdir <BINARY_DIR> fix_boost_project-config_for_mingw.bat project-config.jam
                 COMMENT "Fix boost project-config.jam file for MinGW..."
