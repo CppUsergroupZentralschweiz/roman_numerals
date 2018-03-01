@@ -34,6 +34,9 @@ if(NOT MSVC)
         -Wall
         -Wextra
         -Werror
+        -Wno-c++98-compat
+        -Wno-exit-time-destructors
+        -Wno-global-constructors
         $<$<BOOL:${CMAKE_COMPILER_IS_CLANGCXX}>:-Weverything>
         )
 endif(NOT MSVC)
@@ -41,6 +44,11 @@ endif(NOT MSVC)
 target_compile_options(roman_validator_lib
     PRIVATE
     $<$<BOOL:${MSVC}>:/analyze;/W4>
+    )
+
+target_compile_features(roman_validator_lib
+    PRIVATE
+    cxx_auto_type
     )
 
 if(CLANG_TIDY_EXE AND NOT CMAKE_COMPILER_IS_GNUCXX)

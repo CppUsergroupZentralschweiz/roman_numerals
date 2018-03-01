@@ -54,6 +54,7 @@ if(NOT MSVC)
         -Wall
         -Wextra
         -Werror
+        -Wno-c++98-compat
         $<$<BOOL:${CMAKE_COMPILER_IS_CLANGCXX}>:-Weverything>
         )
 endif(NOT MSVC)
@@ -67,25 +68,24 @@ target_compile_definitions(${PROJECT_NAME}
     PRIVATE
     $<$<BOOL:${WIN32}>:WINVER=0x0A00;_WIN32_WINNT=0x0A00>
     )
+
+target_compile_features(${PROJECT_NAME}
+    PRIVATE
+    cxx_auto_type
+    )
 #
 # with Boost
 #
 option(USE_STATIC_BOOST "Statically link Boost" ${WIN32})
 
 if(NOT BOOST_VERSION)
-    if(${CMAKE_MINOR_VERSION} GREATER 9)
-        set(BOOST_VER_STRING "1.66.0")
-        set(BOOST_SHA1_HASH "b6b284acde2ad7ed49b44e856955d7b1ea4e9459")
-    elseif(${CMAKE_MINOR_VERSION} LESS 9)
-        set(BOOST_VER_STRING "1.61.0")
-        set(BOOST_SHA1_HASH "2d2b80771f584f327827193fcf3abf836edcdfaa")
+    if(${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} VERSION_LESS 3.9)
+        set(BOOST_VER_STRING "1.63.0")
     else()
         set(BOOST_VER_STRING "1.65.1")
-        set(BOOST_SHA1_HASH "362fb9389734cfd57cea80b221516b88b6819eb5")
     endif()
 
-    set(BOOST_VERSION ${BOOST_VER_STRING} CACHE STRING "Define Boost version")
-    set(BOOST_HASH SHA1=${BOOST_SHA1_HASH} CACHE STRING "Define Download Hashs")
+    set(BOOST_VERSION ${BOOST_VER_STRING} CACHE STRING "Define Boost version (at least 1.63.0)")
 endif(NOT BOOST_VERSION)
 
 target_compile_definitions(${PROJECT_NAME}

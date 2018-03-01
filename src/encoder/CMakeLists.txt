@@ -34,6 +34,7 @@ if(NOT MSVC)
         -Wall
         -Wextra
         -Werror
+        -Wno-c++98-compat
         $<$<BOOL:${CMAKE_COMPILER_IS_CLANGCXX}>:-Weverything>
         )
 endif(NOT MSVC)
@@ -54,6 +55,7 @@ endif()
 
 target_compile_features(roman_encoder_lib
     PRIVATE
+    cxx_auto_type
     cxx_std_14
     )
 

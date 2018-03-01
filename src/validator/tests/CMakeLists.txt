@@ -63,6 +63,7 @@ if(NOT MSVC)
         -Wall
         -Wextra
         -Werror
+        -Wno-c++98-compat
         $<$<BOOL:${CMAKE_COMPILER_IS_CLANGCXX}>:-Weverything>
         )
 endif(NOT MSVC)

@@ -2,6 +2,7 @@
 # Check for clang compiler
 if(CMAKE_CXX_COMPILER MATCHES ".*clang")
     set(CMAKE_COMPILER_IS_CLANGCXX TRUE)
+    set(CLANG_VERSION ${CMAKE_CXX_COMPILER_VERSION})
     message(STATUS "Clang found")
 else()
     set(CMAKE_COMPILER_IS_CLANGCXX FALSE)
