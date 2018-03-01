@@ -82,7 +82,7 @@ if(NOT DISABLE_BOOST_DOWNLOAD)
 
     if(NOT TARGET boost_external)
         ExternalProject_Add(boost_external
-            URL http://downloads.sourceforge.net/project/boost/boost/${BOOST_VERSION}/boost_${Boost_Version_Underscore}.tar.bz2
+            URL https://downloads.sourceforge.net/project/boost/boost/${BOOST_VERSION}/boost_${Boost_Version_Underscore}.tar.bz2
             PREFIX boost
             INSTALL_DIR ${boost_INSTALL}
             LOG_DOWNLOAD ON

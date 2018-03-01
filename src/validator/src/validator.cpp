@@ -1,4 +1,4 @@
-#include "roman_numeral_validator.h"
+#include "roman_validator/validator.h"
 
 #include <map>
 #include <algorithm>
@@ -59,11 +59,11 @@ bool check_consecutive_equals(const std::string& roman) {
 bool check_sum_smaller_denominations(const std::string& roman) {
     auto prev = 0u;
     auto roman_reverse = roman;
-    auto arabic = 0;
+    auto arabic = 0u;
     std::reverse(roman_reverse.begin(), roman_reverse.end());
     auto next_decimal = to_arabic_mapping.at(roman_reverse.at(0)) * 10;
     for (const auto& numeral: roman_reverse) {
-        const int32_t inc = to_arabic_mapping.at(numeral);
+        const auto inc = to_arabic_mapping.at(numeral);
         if (inc >= next_decimal) {
             arabic = 0;
             next_decimal = inc % next_decimal == 0 ? inc * 10 : inc + inc;
@@ -91,7 +91,7 @@ bool check_ordering(const std::string& roman) {
     }
     return true;
 }
-}
+} // namespace
 
 bool roman_is_valid(const std::string& roman) {
 

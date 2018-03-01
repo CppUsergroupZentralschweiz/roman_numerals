@@ -1,4 +1,4 @@
-#include "roman_validator/roman_numeral_validator.h"
+#include "roman_validator/validator.h"
 #include <catch.hpp>
 
 // see https://projecteuler.net/about=roman_numerals

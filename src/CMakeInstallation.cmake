@@ -5,12 +5,12 @@ set(CPACK_PACKAGE_VERSION_PATCH "${PROJECT_VERSION_PATCH}")
 set(CPACK_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
 
 ### general settings
-set(CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}/resources\\\\flag.bmp")
+#set(CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}/resources\\\\flag.bmp")
 
 set(CPACK_PACKAGE_NAME "${APPLICATION_NAME}")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Roman numerals en-/decoder.")
 set(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_SOURCE_DIR}/../README.md")
-set(CPACK_PACKAGE_VENDOR "Michel Estermann")
+set(CPACK_PACKAGE_VENDOR "C++ Usergroup Zentralschweiz")
 set(CPACK_PACKAGE_INSTALL_DIRECTORY "Roman numerals ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}")
 
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/../LICENSE")
@@ -29,9 +29,9 @@ set(CPACK_COMPONENT_GROUP_PROGRAM_DESCRIPTION
 
 ### nsis generator (Windows)
 
-set(CPACK_NSIS_MUI_ICON "${CMAKE_SOURCE_DIR}/resources/ship-wheel.ico")
-set(CPACK_NSIS_MUI_UNIICON "${CMAKE_SOURCE_DIR}/resources/skull-and-bones.ico")
-set(CPACK_NSIS_MODIFY_PATH "ON")
+#set(CPACK_NSIS_MUI_ICON "${CMAKE_SOURCE_DIR}/resources/ship-wheel.ico")
+#set(CPACK_NSIS_MUI_UNIICON "${CMAKE_SOURCE_DIR}/resources/skull-and-bones.ico")
+#set(CPACK_NSIS_MODIFY_PATH "ON")
 
 set(CPACK_CREATE_DESKTOP_LINKS "${APPLICATION_NAME}")
 
@@ -39,8 +39,8 @@ set(CPACK_NSIS_DISPLAY_NAME "${APPLICATION_NAME}")
 set(CPACK_NSIS_COMPRESSOR "/SOLID zlib")
 
 set(CPACK_NSIS_CONTACT "estermann.michel@gmail.com")
-set(CPACK_NSIS_HELP_LINK "https://github.com/meshell/${PROJECT_NAME}")
-set(CPACK_NSIS_URL_INFO_ABOUT "https://github.com/meshell/${PROJECT_NAME}")
+set(CPACK_NSIS_HELP_LINK "https://github.com/CppUsergroupZentralschweiz/roman_numerals")
+set(CPACK_NSIS_URL_INFO_ABOUT "https://github.com/CppUsergroupZentralschweiz/roman_numerals")
 
 set(CPACK_NSIS_CREATE_ICONS "
   SetOutPath \\\"$INSTDIR\\\\bin\\\"
@@ -55,7 +55,7 @@ set(CPACK_NSIS_DELETE_ICONS "
 string(TOLOWER ${PROJECT_NAME} LOWER_CASE_PROJECT_NAME)
 set(CPACK_DEBIAN_PACKAGE_NAME ${LOWER_CASE_PROJECT_NAME})
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Michel Estermann <estermann.michel@gmail.com>")
-set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "https://github.com/meshell/${PROJECT_NAME}")
+set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "https://github.com/CppUsergroupZentralschweiz/roman_numerals")
 #set(CPACK_DEBIAN_PACKAGE_SECTION "")
 #set(CPACK_DEBIAN_PACKAGE_DEPENDS "")
 
