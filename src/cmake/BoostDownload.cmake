@@ -11,19 +11,13 @@ if(NOT DISABLE_BOOST_DOWNLOAD)
     endif(WIN32)
 
     if(NOT BOOST_VERSION)
-        if(${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} VERSION_GREATER 3.9)
-            set(BOOST_VER_STRING "1.66.0")
-            set(BOOST_SHA1_HASH "b6b284acde2ad7ed49b44e856955d7b1ea4e9459")
-        elseif(${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} VERSION_LESS 3.9)
-            set(BOOST_VER_STRING "1.61.0")
-            set(BOOST_SHA1_HASH "2d2b80771f584f327827193fcf3abf836edcdfaa")
+        if(${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} VERSION_LESS 3.9)
+            set(BOOST_VER_STRING "1.63.0")
         else()
             set(BOOST_VER_STRING "1.65.1")
-            set(BOOST_SHA1_HASH "362fb9389734cfd57cea80b221516b88b6819eb5")
         endif()
 
-        set(BOOST_VERSION ${BOOST_VER_STRING} CACHE STRING "Define Boost version")
-        set(BOOST_HASH SHA1=${BOOST_SHA1_HASH} CACHE STRING "Define Download Hashs")
+        set(BOOST_VERSION ${BOOST_VER_STRING} CACHE STRING "Define Boost version (at least 1.63.0)")
     endif(NOT BOOST_VERSION)
 
     string(REPLACE "." "_" Boost_Version_Underscore ${BOOST_VERSION})
@@ -90,8 +84,8 @@ if(NOT DISABLE_BOOST_DOWNLOAD)
 
     if(NOT TARGET boost_external)
         externalproject_add(boost_external
-            URL https://downloads.sourceforge.net/project/boost/boost/${BOOST_VERSION}/boost_${Boost_Version_Underscore}.tar.bz2
-            URL_HASH ${BOOST_HASH}
+            URL https://dl.bintray.com/boostorg/release/${BOOST_VERSION}/source/boost_${Boost_Version_Underscore}.tar.bz2
+            #    URL https://github.com/boostorg/boost/archive/boost-${BOOST_VERSION}.tar.gz
             PREFIX boost
             INSTALL_DIR ${boost_INSTALL}
             LOG_DOWNLOAD ON
