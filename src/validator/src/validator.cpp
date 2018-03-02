@@ -2,7 +2,7 @@
 
 #include <map>
 #include <algorithm>
-#include <vector>
+#include <array>
 
 namespace roman_numerals {
 
@@ -19,7 +19,7 @@ const std::map<char, uint32_t> to_arabic_mapping =
                 {'I', 1}
         };
 
-const std::vector<char> five_x_digits = {{'D', 'L', 'V'}};
+const std::array<char, 3> five_x_digits = {{'D', 'L', 'V'}};
 
 bool check_DLV_occurs_maximal_once(const std::string& roman) {
     for (const auto& digit : five_x_digits) {
@@ -30,7 +30,7 @@ bool check_DLV_occurs_maximal_once(const std::string& roman) {
     return true;
 }
 
-bool check_digits(const std::string& roman) {
+bool check_valid_digits(const std::string& roman) {
     for (const auto& numeral: roman) {
         if (to_arabic_mapping.count(numeral) == 0) {
             return false;
@@ -39,7 +39,7 @@ bool check_digits(const std::string& roman) {
     return true;
 }
 
-bool check_consecutive_equals(const std::string& roman) {
+bool check_max_consecutive_equals(const std::string& roman) {
     char prev_numeral = '\0';
     auto count_consecutive_equals = 1u;
     for (const auto& numeral: roman) {
@@ -99,8 +99,8 @@ bool roman_is_valid(const std::string& roman) {
         return true;
     }
     return (check_DLV_occurs_maximal_once(roman) &&
-            check_digits(roman) &&
-            check_consecutive_equals(roman) &&
+            check_valid_digits(roman) &&
+            check_max_consecutive_equals(roman) &&
             check_sum_smaller_denominations(roman) &&
             check_ordering(roman));
 }

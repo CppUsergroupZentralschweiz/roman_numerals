@@ -3,15 +3,14 @@
 #include "roman_decoder/decode.h"
 
 #ifdef USE_BOOST
+
 #include <boost/program_options.hpp>
-#include <string>
+
 #else
-
 #include <getopt.h>
-
 #endif
 
-
+#include <string>
 #include <iostream>
 
 int main(int argc, char** argv) {
@@ -30,7 +29,7 @@ int main(int argc, char** argv) {
                           << roman_numerals::version_minor
                           << "."
                           << roman_numerals::version_patch
-                          << std::endl;
+                          << "\n";
                 return 0;
             case 'r':
                 roman_number = optarg;
@@ -79,7 +78,7 @@ int main(int argc, char** argv) {
                   << roman_numerals::version_minor
                   << "."
                   << roman_numerals::version_patch
-                  << std::endl;
+                  << "\n";
         return 0;
     }
 
@@ -92,14 +91,24 @@ int main(int argc, char** argv) {
     try {
         if ((not roman_number.empty()) && (arabic_number <= 4000u)) {
             const auto arabic_result = roman_numerals::from_roman(roman_number);
-            std::cout << "'" << roman_number << "' is " << (arabic_result == arabic_number ? "" : "not ")
-                      << std::to_string(arabic_number) << " (is " << arabic_result << ")\n";
+            std::cout << "'" << roman_number
+                      << "' is "
+                      << (arabic_result == arabic_number ? "" : "not ")
+                      << std::to_string(arabic_number)
+                      << " (is " << arabic_result
+                      << ")\n";
         } else if (not roman_number.empty()) {
 
             const auto arabic_result = roman_numerals::from_roman(roman_number);
-            std::cout << "'" << roman_number << "' is " << std::to_string(arabic_result) << "\n";
+            std::cout << "'" << roman_number
+                      << "' is "
+                      << std::to_string(arabic_result)
+                      << "\n";
         } else if (arabic_number <= 4000u) {
-            std::cout << std::to_string(arabic_number) << " is '" << roman_numerals::to_roman(arabic_number) << "'\n";
+            std::cout << std::to_string(arabic_number)
+                      << " is '"
+                      << roman_numerals::to_roman(arabic_number)
+                      << "'\n";
         }
 
     } catch (const std::exception& ex) {

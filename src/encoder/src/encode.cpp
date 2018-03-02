@@ -1,6 +1,6 @@
 #include "roman_encoder/encode.h"
 
-#include <vector>
+#include <array>
 #include <utility>
 
 using namespace std::string_literals;
@@ -8,7 +8,7 @@ using namespace std::string_literals;
 namespace roman_numerals {
 
 std::string to_roman(uint32_t arabic) {
-    const std::vector<std::pair<uint32_t, const char*>> to_roman_mapping =
+    const std::array<std::pair<uint32_t, const char*>, 13> to_roman_mapping =
             {{
                      std::make_pair(1000, "M"),
                      std::make_pair(900, "CM"),

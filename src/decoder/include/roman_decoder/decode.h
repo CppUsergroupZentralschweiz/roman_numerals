@@ -3,7 +3,6 @@
 
 #include <string>
 
-
 namespace roman_numerals {
 
 uint32_t from_roman(const std::string& roman);
