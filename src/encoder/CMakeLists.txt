@@ -60,12 +60,10 @@ target_compile_features(roman_encoder_lib
     )
 
 # Coverage instrumentation
-find_program(GCOV_PATH gcov)
-
-if(GCOV_PATH AND NOT MSVC)
-    include(CodeCoverage)
+include(CodeCoverage)
+if(Coverage_FOUND)
     enable_coverage(roman_encoder_lib)
-endif(GCOV_PATH AND NOT MSVC)
+endif(Coverage_FOUND)
 
 
 # tests

@@ -77,24 +77,39 @@ find_program(GENHTML_PATH genhtml)
 find_program(GCOVR_PATH gcovr PATHS ${CMAKE_CURRENT_LIST_DIR}/../scripts/test)
 find_program(SIMPLE_PYTHON_EXECUTABLE python)
 
+set(Coverage_FOUND TRUE)
+
+if(GCOVR_PATH)
+    option(COVERAGE_XML "Enable binary instrumentation to collect test coverage information in the DEBUG configuration (XML output)" ON)
+else()
+    option(COVERAGE_XML "Enable binary instrumentation to collect test coverage information in the DEBUG configuration (XML output)" ON)
+endif(GCOVR_PATH)
+if(LCOV_PATH)
+    option(COVERAGE_HTML "Enable binary instrumentation to collect test coverage information in the DEBUG configuration (HTML output)" ON)
+else()
+    option(COVERAGE_HTML "Enable binary instrumentation to collect test coverage information in the DEBUG configuration (HTML output)" OFF)
+endif(LCOV_PATH)
+
 if(NOT GCOV_PATH)
-    message(FATAL_ERROR "gcov not found! Aborting...")
+    message(WARNING "gcov not found! Coverage not possible...")
+    set(Coverage_FOUND FALSE)
 endif() # NOT GCOV_PATH
 
 include(clang)
 
 if(CLANG_VERSION)
     if(${CLANG_VERSION} VERSION_LESS 3)
-        message(FATAL_ERROR "Clang version must be 3.0.0 or greater! Aborting...")
+        message(WARNING "Clang version must be 3.0.0 or greater! Coverage not possible...")
+        set(Coverage_FOUND FALSE)
     endif()
 elseif(NOT CMAKE_COMPILER_IS_GNUCXX)
-    message(FATAL_ERROR "Compiler is not GNU gcc! Aborting...")
+    message(WARNING "Compiler is not GNU gcc! Coverage not possible...")
+    set(Coverage_FOUND FALSE)
 endif()
 
 if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
     message(WARNING "Code coverage results with an optimised (non-Debug) build may be misleading")
 endif(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
-
 
 set(COVERAGE_EXCLUDES "")
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/coverage.ignore)
@@ -232,4 +247,7 @@ function(setup_target_for_coverage_cobertura)
 
 endfunction() # setup_target_for_coverage_cobertura
 
+set(Coverage_FOUND ${Coverage_FOUND} PARENT_SCOPE)
+set(GCOVR_FOUND ${GCOVR_FOUND} PARENT_SCOPE)
+set(LCOV_FOUND ${LCOV_FOUND} PARENT_SCOPE)
 

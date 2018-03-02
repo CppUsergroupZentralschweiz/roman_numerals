@@ -3,10 +3,6 @@
 # required minimum version of cmake
 cmake_minimum_required(VERSION 3.6 FATAL_ERROR)
 
-# Options for difining coverage output
-option(COVERAGE_XML "Enable binary instrumentation to collect test coverage information in the DEBUG configuration (XML output)" TRUE)
-option(COVERAGE_HTML "Enable binary instrumentation to collect test coverage information in the DEBUG configuration (HTML output)" FALSE)
-
 include(clang)
 
 find_package(Catch 2.1.2)
@@ -111,10 +107,13 @@ add_custom_target(run_decoder_unittests_junit
     )
 
 # Coverage
-find_program(GCOV_PATH gcov)
+include(CodeCoverage)
 
-if(GCOV_PATH AND NOT MSVC AND CMAKE_BUILD_TYPE MATCHES Debug)
-    include(CodeCoverage)
+message(STATUS "Coverage_FOUND ${Coverage_FOUND}")
+message(STATUS "COVERAGE_XML ${COVERAGE_XML}")
+message(STATUS "COVERAGE_XML ${COVERAGE_HTML}")
+
+if(Coverage_FOUND AND CMAKE_BUILD_TYPE MATCHES Debug)
     if(COVERAGE_XML)
         setup_target_for_coverage_cobertura(
             NAME coverage_decoder_unittests_cobertura
@@ -140,4 +139,4 @@ if(GCOV_PATH AND NOT MSVC AND CMAKE_BUILD_TYPE MATCHES Debug)
         endif(NOT TARGET coverage_decoder)
         add_dependencies(coverage_decoder coverage_decoder_unittests)
     endif(COVERAGE_HTML)
-endif(GCOV_PATH AND NOT MSVC AND CMAKE_BUILD_TYPE MATCHES Debug)
+endif(Coverage_FOUND AND CMAKE_BUILD_TYPE MATCHES Debug)

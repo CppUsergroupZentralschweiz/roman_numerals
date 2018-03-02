@@ -68,12 +68,10 @@ if(CLANG_TIDY_EXE AND NOT CMAKE_COMPILER_IS_GNUCXX)
 endif()
 
 # Coverage instrumentation
-find_program(GCOV_PATH gcov)
-
-if(GCOV_PATH AND NOT MSVC)
-    include(CodeCoverage)
+include(CodeCoverage)
+if(Coverage_FOUND)
     enable_coverage(roman_decoder_lib)
-endif(GCOV_PATH AND NOT MSVC)
+endif(Coverage_FOUND)
 
 # tests
 enable_testing(true)
