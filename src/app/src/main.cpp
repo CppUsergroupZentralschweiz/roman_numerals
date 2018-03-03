@@ -1,6 +1,7 @@
 #include "roman_numerals_version.h"
 #include "roman_encoder/encode.h"
 #include "roman_decoder/decode.h"
+#include <ciso646>
 
 #ifdef USE_BOOST
 

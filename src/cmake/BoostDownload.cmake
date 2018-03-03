@@ -5,9 +5,11 @@ if(NOT DISABLE_BOOST_DOWNLOAD)
     if(WIN32)
         set(SCRIPT_SUFFIX ".bat")
         set(EXE_SUFFIX ".exe")
+        set(ARCHIVE_SUFFIX ".zip")
     else(WIN32)
         set(SCRIPT_SUFFIX ".sh")
         set(EXE_SUFFIX "")
+        set(ARCHIVE_SUFFIX ".tar.bz2")
     endif(WIN32)
 
     if(NOT BOOST_VERSION)
@@ -52,7 +54,7 @@ if(NOT DISABLE_BOOST_DOWNLOAD)
             set(BOOST_TOOLSET_BUILD "toolset=msvc-12.0")
         elseif(${MSVC_VERSION} EQUAL "1900")
             set(BOOST_TOOLSET_BUILD "toolset=msvc-14.0")
-        elseif(${MSVC_VERSION} EQUAL "1910")
+        elseif(${MSVC_VERSION} VERSION_GREATER "1910")
             set(BOOST_TOOLSET_BUILD "toolset=msvc-14.1")
         endif(${MSVC_VERSION} EQUAL "1800")
     endif(MSVC_VERSION)
@@ -84,9 +86,10 @@ if(NOT DISABLE_BOOST_DOWNLOAD)
 
     if(NOT TARGET boost_external)
         externalproject_add(boost_external
-            URL https://dl.bintray.com/boostorg/release/${BOOST_VERSION}/source/boost_${Boost_Version_Underscore}.tar.bz2
+            URL https://dl.bintray.com/boostorg/release/${BOOST_VERSION}/source/boost_${Boost_Version_Underscore}${ARCHIVE_SUFFIX}
             #    URL https://github.com/boostorg/boost/archive/boost-${BOOST_VERSION}.tar.gz
             PREFIX boost
+            PATCH_COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_LIST_DIR}/../scripts/config_toolset.bat <SOURCE_DIR>/tools/build/src/engine/config_toolset.bat
             INSTALL_DIR ${boost_INSTALL}
             LOG_DOWNLOAD ON
             LOG_CONFIGURE ON
@@ -155,10 +158,30 @@ if(NOT DISABLE_BOOST_DOWNLOAD)
     endif()
 
     if(USE_STATIC_BOOST)
-        set(boost_LIBRARY_SUFFIX .a)
+        if(MSVC)
+            set(boost_LIBRARY_SUFFIX .lib)
+        else()
+            set(boost_LIBRARY_SUFFIX .a)
+        endif(MSVC)
     else(USE_STATIC_BOOST)
-        set(boost_LIBRARY_SUFFIX .so)
+        if(MSVC)
+            set(boost_LIBRARY_SUFFIX .dll)
+        else()
+            set(boost_LIBRARY_SUFFIX .so)
+        endif(MSVC)
+
     endif(USE_STATIC_BOOST)
+
+    set(boost_TOOLSET_SUFFIX "")
+    if(MSVC_VERSION)
+        if(${MSVC_VERSION} EQUAL "1800")
+            set(boost_TOOLSET_SUFFIX "-vc120")
+        elseif(${MSVC_VERSION} EQUAL "1900")
+            set(boost_TOOLSET_SUFFIX "-vc140")
+        elseif(${MSVC_VERSION} VERSION_GREATER "1910")
+            set(boost_TOOLSET_SUFFIX "-vc141")
+        endif(${MSVC_VERSION} EQUAL "1800")
+    endif(MSVC_VERSION)
 
     set(boost_NAME_SUFFIX_RELEASE "")
     set(boost_NAME_SUFFIX_DEBUG "")
@@ -170,10 +193,24 @@ if(NOT DISABLE_BOOST_DOWNLOAD)
 
     if(Boost_USE_STATIC_RUNTIME)
         set(boost_NAME_SUFFIX_RELEASE "${boost_NAME_SUFFIX_RELEASE}-s")
-        set(boost_NAME_SUFFIX_DEBUG "${boost_NAME_SUFFIX_RELEASE}-sd")
+        if(MSVC)
+            set(boost_NAME_SUFFIX_DEBUG "${boost_NAME_SUFFIX_RELEASE}-sgd")
+        else()
+            set(boost_NAME_SUFFIX_DEBUG "${boost_NAME_SUFFIX_RELEASE}-sd")
+        endif(MSVC)
     else(Boost_USE_STATIC_RUNTIME)
-        set(boost_NAME_SUFFIX_DEBUG "${boost_NAME_SUFFIX_DEBUG}-d")
+        if(MSVC)
+            set(boost_NAME_SUFFIX_DEBUG "${boost_NAME_SUFFIX_DEBUG}-gd")
+        else()
+            set(boost_NAME_SUFFIX_DEBUG "${boost_NAME_SUFFIX_DEBUG}-d")
+        endif(MSVC)
     endif(Boost_USE_STATIC_RUNTIME)
+
+    set(boost_Name_version "")
+    if(BOOST_LAYOUT)
+        set(boost_Name_version "-${Boost_Version_Underscore}")
+    endif(BOOST_LAYOUT)
+
 
     set(Boost_LIBRARIES "")
 
@@ -193,21 +230,21 @@ if(NOT DISABLE_BOOST_DOWNLOAD)
             set_target_properties(Boost::${library} PROPERTIES
                 IMPORTED_LINK_INTERFACE_LANGUAGES "CXX"
                 IMPORTED_LOCATION
-                "${boost_LIB_DIR}/libboost_${library}${boost_NAME_SUFFIX_RELEASE}${boost_LIBRARY_SUFFIX}")
+                "${boost_LIB_DIR}/libboost_${library}${boost_TOOLSET_SUFFIX}${boost_NAME_SUFFIX_RELEASE}${boost_Name_version}${boost_LIBRARY_SUFFIX}")
 
             set_property(TARGET Boost::${library} APPEND PROPERTY
                 IMPORTED_CONFIGURATIONS RELEASE)
             set_target_properties(Boost::${library} PROPERTIES
                 IMPORTED_LINK_INTERFACE_LANGUAGES_RELEASE "CXX"
                 IMPORTED_LOCATION_RELEASE
-                "${boost_LIB_DIR}/libboost_${library}${boost_NAME_SUFFIX_RELEASE}${boost_LIBRARY_SUFFIX}")
+                "${boost_LIB_DIR}/libboost_${library}${boost_TOOLSET_SUFFIX}${boost_NAME_SUFFIX_RELEASE}${boost_Name_version}${boost_LIBRARY_SUFFIX}")
 
             set_property(TARGET Boost::${library} APPEND PROPERTY
                 IMPORTED_CONFIGURATIONS DEBUG)
             set_target_properties(Boost::${library} PROPERTIES
                 IMPORTED_LINK_INTERFACE_LANGUAGES_DEBUG "CXX"
                 IMPORTED_LOCATION_DEBUG
-                "${boost_LIB_DIR}/libboost_${library}${boost_NAME_SUFFIX_DEBUG}${boost_LIBRARY_SUFFIX}")
+                "${boost_LIB_DIR}/libboost_${library}${boost_TOOLSET_SUFFIX}${boost_NAME_SUFFIX_DEBUG}${boost_Name_version}${boost_LIBRARY_SUFFIX}")
 
             add_dependencies(Boost::${library} boost_external)
             list(APPEND Boost_LIBRARIES Boost::${library})

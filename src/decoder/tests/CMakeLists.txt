@@ -109,10 +109,6 @@ add_custom_target(run_decoder_unittests_junit
 # Coverage
 include(CodeCoverage)
 
-message(STATUS "Coverage_FOUND ${Coverage_FOUND}")
-message(STATUS "COVERAGE_XML ${COVERAGE_XML}")
-message(STATUS "COVERAGE_XML ${COVERAGE_HTML}")
-
 if(Coverage_FOUND AND CMAKE_BUILD_TYPE MATCHES Debug)
     if(COVERAGE_XML)
         setup_target_for_coverage_cobertura(
