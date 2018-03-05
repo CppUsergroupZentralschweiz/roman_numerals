@@ -100,7 +100,13 @@ endif(USE_STATIC_BOOST)
 
 set(Boost_Components ${Boost_Components} program_options)
 
-set(BOOST_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/boost)
+set(Boost_lib_name_suffix "32")
+if(CMAKE_CL_64)
+    set(Boost_lib_dir_suffix "64")
+endif(CMAKE_CL_64)
+
+set(BOOST_LIBRARYDIR ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/boost/lib${Boost_lib_dir_suffix})
+set(BOOST_INCLUDEDIR ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/boost/include)
 set(Boost_ADDITIONAL_VERSIONS ${BOOST_VERSION})
 
 find_package(Boost ${BOOST_VERSION} COMPONENTS ${Boost_Components})

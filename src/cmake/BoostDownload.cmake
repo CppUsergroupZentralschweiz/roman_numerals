@@ -24,9 +24,6 @@ if(NOT DISABLE_BOOST_DOWNLOAD)
 
     string(REPLACE "." "_" Boost_Version_Underscore ${BOOST_VERSION})
 
-    set(boost_INSTALL ${CMAKE_CURRENT_LIST_DIR}/../third_party/boost)
-    set(boost_INCLUDE_DIR ${boost_INSTALL}/include)
-    set(boost_LIB_DIR ${boost_INSTALL}/lib)
 
     foreach(library ${Boost_Components})
         if("${library}" MATCHES "unit_test_framework")
@@ -49,17 +46,8 @@ if(NOT DISABLE_BOOST_DOWNLOAD)
         set(BOOST_LINK "shared,static")
     endif(USE_STATIC_BOOST)
 
-    if(MSVC_VERSION)
-        if(${MSVC_VERSION} EQUAL "1800")
-            set(BOOST_TOOLSET_BUILD "toolset=msvc-12.0")
-        elseif(${MSVC_VERSION} EQUAL "1900")
-            set(BOOST_TOOLSET_BUILD "toolset=msvc-14.0")
-        elseif(${MSVC_VERSION} VERSION_GREATER "1910")
-            set(BOOST_TOOLSET_BUILD "toolset=msvc-14.1")
-        endif(${MSVC_VERSION} EQUAL "1800")
-    endif(MSVC_VERSION)
+    set(Boost_lib_name_suffix "")
 
-    # Use the same compiler for building boost as for your own project
     if(CMAKE_COMPILER_IS_GNUCXX AND WIN32)
         set(BOOST_TOOLSET "mingw")
         set(BOOST_TOOLSET_BUILD "toolset=gcc")
@@ -78,11 +66,26 @@ if(NOT DISABLE_BOOST_DOWNLOAD)
     elseif(MSVC)
         set(BOOST_TOOLSET "msvc")
         set(BOOST_LAYOUT versioned)
+        if(${MSVC_VERSION} EQUAL "1800")
+            set(BOOST_TOOLSET_BUILD "toolset=msvc-12.0")
+        elseif(${MSVC_VERSION} EQUAL "1900")
+            set(BOOST_TOOLSET_BUILD "toolset=msvc-14.0")
+        elseif(${MSVC_VERSION} VERSION_GREATER "1910")
+            set(BOOST_TOOLSET_BUILD "toolset=msvc-14.1")
+        endif(${MSVC_VERSION} EQUAL "1800")
+
+        set(Boost_lib_dir_suffix "32")
+        if(CMAKE_CL_64)
+            set(BOOST_TOOLSET_ADDRESSMODEL "address-model=64")
+            set(Boost_lib_dir_suffix "64")
+        endif(CMAKE_CL_64)
     endif(CMAKE_COMPILER_IS_GNUCXX AND WIN32)
 
-    if(CMAKE_CL_64)
-        set(BOOST_TOOLSET_ADDRESSMODEL "address-model=64")
-    endif(CMAKE_CL_64)
+
+    set(boost_INSTALL ${CMAKE_CURRENT_LIST_DIR}/../third_party/boost)
+    set(boost_INCLUDE_DIR ${boost_INSTALL}/include)
+    set(boost_LIB_DIR ${boost_INSTALL}/lib${Boost_lib_dir_suffix})
+
 
     if(NOT TARGET boost_external)
         externalproject_add(boost_external
@@ -122,6 +125,12 @@ if(NOT DISABLE_BOOST_DOWNLOAD)
                 COMMENT "Move boost headers..."
                 DEPENDEES install
                 )
+            externalproject_add_step(boost_external MoveLibs
+                COMMAND ${CMAKE_COMMAND} -E copy_directory ${boost_INSTALL}/lib ${boost_LIB_DIR}
+                COMMAND ${CMAKE_COMMAND} -E remove_directory ${boost_INSTALL}/lib
+                COMMENT "Move boost libs..."
+                DEPENDEES install
+                )
         endif(MSVC)
 
         if(MINGW)
@@ -155,7 +164,23 @@ if(NOT DISABLE_BOOST_DOWNLOAD)
                 INTERFACE_INCLUDE_DIRECTORIES "${Boost_INCLUDE_DIRS}")
         endif()
         add_dependencies(Boost::boost boost_external)
+    endif(NOT TARGET Boost::boost)
+
+    if(NOT TARGET Boost::diagnostic_definitions)
+        add_library(Boost::diagnostic_definitions INTERFACE IMPORTED)
+        add_library(Boost::disable_autolinking INTERFACE IMPORTED)
+        add_library(Boost::dynamic_linking INTERFACE IMPORTED)
     endif()
+
+    if(WIN32)
+        set(Boost_LIB_DIAGNOSTIC_DEFINITIONS "-DBOOST_LIB_DIAGNOSTIC")
+        set_target_properties(Boost::diagnostic_definitions PROPERTIES
+            INTERFACE_COMPILE_DEFINITIONS "BOOST_LIB_DIAGNOSTIC")
+        set_target_properties(Boost::disable_autolinking PROPERTIES
+            INTERFACE_COMPILE_DEFINITIONS "BOOST_ALL_NO_LIB")
+        set_target_properties(Boost::dynamic_linking PROPERTIES
+            INTERFACE_COMPILE_DEFINITIONS "BOOST_ALL_DYN_LINK")
+    endif(WIN32)
 
     if(USE_STATIC_BOOST)
         if(MSVC)
