@@ -34,9 +34,6 @@ if(NOT DISABLE_BOOST_DOWNLOAD)
     endforeach(library)
 
     set(BOOST_THREADING multi)
-
-    set(BOOST_LAYOUT tagged)
-
     set(BOOST_TOOLSET)
     set(BOOST_TOOLSET_BUILD)
 
@@ -65,7 +62,6 @@ if(NOT DISABLE_BOOST_DOWNLOAD)
         set(BOOST_LINK_FLAGS "")
     elseif(MSVC)
         set(BOOST_TOOLSET "msvc")
-        set(BOOST_LAYOUT versioned)
         if(${MSVC_VERSION} EQUAL "1800")
             set(BOOST_TOOLSET_BUILD "toolset=msvc-12.0")
         elseif(${MSVC_VERSION} EQUAL "1900")
@@ -86,6 +82,7 @@ if(NOT DISABLE_BOOST_DOWNLOAD)
     set(boost_INCLUDE_DIR ${boost_INSTALL}/include)
     set(boost_LIB_DIR ${boost_INSTALL}/lib${Boost_lib_dir_suffix})
 
+    set(BOOST_LAYOUT versioned)
 
     if(NOT TARGET boost_external)
         externalproject_add(boost_external
@@ -117,7 +114,7 @@ if(NOT DISABLE_BOOST_DOWNLOAD)
             INSTALL_COMMAND ""
             )
 
-        if(MSVC)
+        if("${BOOST_LAYOUT}" STREQUAL "versioned")
             string(REPLACE "_0" "" Boost_Version_Shorten ${Boost_Version_Underscore})
             externalproject_add_step(boost_external MoveHeaders
                 COMMAND ${CMAKE_COMMAND} -E copy_directory ${boost_INCLUDE_DIR}/boost-${Boost_Version_Shorten}/boost ${boost_INCLUDE_DIR}/boost
@@ -125,13 +122,16 @@ if(NOT DISABLE_BOOST_DOWNLOAD)
                 COMMENT "Move boost headers..."
                 DEPENDEES install
                 )
+        endif("${BOOST_LAYOUT}" STREQUAL "versioned")
+
+        if(NOT (${boost_INSTALL}/lib STREQUAL ${boost_LIB_DIR}))
             externalproject_add_step(boost_external MoveLibs
                 COMMAND ${CMAKE_COMMAND} -E copy_directory ${boost_INSTALL}/lib ${boost_LIB_DIR}
                 COMMAND ${CMAKE_COMMAND} -E remove_directory ${boost_INSTALL}/lib
                 COMMENT "Move boost libs..."
                 DEPENDEES install
                 )
-        endif(MSVC)
+        endif(NOT (${boost_INSTALL}/lib STREQUAL ${boost_LIB_DIR}))
 
         if(MINGW)
             externalproject_add_step(boost_external FixBoostProjectConfig
@@ -182,6 +182,133 @@ if(NOT DISABLE_BOOST_DOWNLOAD)
             INTERFACE_COMPILE_DEFINITIONS "BOOST_ALL_DYN_LINK")
     endif(WIN32)
 
+    #
+    # Runs compiler with "-dumpversion" and parses major/minor
+    # version with a regex.
+    #
+    function(_boost_compiler_dumpversion _OUTPUT_VERSION)
+        string(REGEX REPLACE "([0-9]+)\\.([0-9]+)(\\.[0-9]+)?" "\\1\\2"
+            _boost_COMPILER_VERSION ${CMAKE_CXX_COMPILER_VERSION})
+
+        set(${_OUTPUT_VERSION} ${_boost_COMPILER_VERSION} PARENT_SCOPE)
+    endfunction()
+
+    #======================
+    # Systematically build up the Boost ABI tag for the 'tagged' and 'versioned' layouts
+    # see https://github.com/Kitware/CMake/blob/master/Modules/FindBoost.cmake
+
+    # Guesses Boost's compiler prefix used in built library names
+    # Returns the guess by setting the variable pointed to by _ret
+    function(_boost_guess_compiler_prefix _ret)
+        if("x${CMAKE_CXX_COMPILER_ID}" STREQUAL "xIntel")
+            if(WIN32)
+                set(_boost_COMPILER "-iw")
+            else()
+                set(_boost_COMPILER "-il")
+            endif()
+        elseif(GHSMULTI)
+            set(_boost_COMPILER "-ghs")
+        elseif("x${CMAKE_CXX_COMPILER_ID}" STREQUAL "xMSVC")
+            if(NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS 19.10)
+                set(_boost_COMPILER "-vc141")
+            elseif(NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS 19)
+                set(_boost_COMPILER "-vc140")
+            elseif(NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS 18)
+                set(_boost_COMPILER "-vc120")
+            endif()
+        elseif(BORLAND)
+            set(_boost_COMPILER "-bcb")
+        elseif(CMAKE_CXX_COMPILER_ID STREQUAL "SunPro")
+            set(_boost_COMPILER "-sw")
+        elseif(CMAKE_CXX_COMPILER_ID STREQUAL "XL")
+            set(_boost_COMPILER "-xlc")
+        elseif(MINGW)
+            _boost_compiler_dumpversion(_boost_COMPILER_VERSION)
+            set(_boost_COMPILER "-mgw${_boost_COMPILER_VERSION}")
+        elseif(UNIX)
+            if(CMAKE_COMPILER_IS_GNUCXX)
+                _boost_compiler_dumpversion(_boost_COMPILER_VERSION)
+                # Determine which version of GCC we have.
+                if(APPLE)
+                    # In Boost 1.36.0 and newer, the mangled compiler name used
+                    # on Mac OS X/Darwin is "xgcc".
+                    set(_boost_COMPILER "-xgcc${_boost_COMPILER_VERSION}")
+                else()
+                    set(_boost_COMPILER "-gcc${_boost_COMPILER_VERSION}")
+                endif()
+            endif()
+        else()
+            # TODO at least Boost_DEBUG here?
+            set(_boost_COMPILER "")
+        endif()
+        set(${_ret} ${_boost_COMPILER} PARENT_SCOPE)
+    endfunction()
+
+    set(_boost_RELEASE_ABI_TAG "-")
+    set(_boost_DEBUG_ABI_TAG "-")
+    # Key       Use this library when:
+    #  s        linking statically to the C++ standard library and
+    #           compiler runtime support libraries.
+    if(Boost_USE_STATIC_RUNTIME)
+        set(_boost_RELEASE_ABI_TAG "${_boost_RELEASE_ABI_TAG}s")
+        set(_boost_DEBUG_ABI_TAG "${_boost_DEBUG_ABI_TAG}s")
+    endif()
+    #  g        using debug versions of the standard and runtime
+    #           support libraries
+    if(WIN32 AND Boost_USE_DEBUG_RUNTIME)
+        if("x${CMAKE_CXX_COMPILER_ID}" STREQUAL "xMSVC"
+            OR "x${CMAKE_CXX_COMPILER_ID}" STREQUAL "xClang"
+            OR "x${CMAKE_CXX_COMPILER_ID}" STREQUAL "xIntel")
+            string(APPEND _boost_DEBUG_ABI_TAG "g")
+        endif()
+    endif()
+    #  y        using special debug build of python
+    if(Boost_USE_DEBUG_PYTHON)
+        string(APPEND _boost_DEBUG_ABI_TAG "y")
+    endif()
+    #  d        using a debug version of your code
+    string(APPEND _boost_DEBUG_ABI_TAG "d")
+    #  p        using the STLport standard library rather than the
+    #           default one supplied with your compiler
+    if(Boost_USE_STLPORT)
+        string(APPEND _boost_RELEASE_ABI_TAG "p")
+        string(APPEND _boost_DEBUG_ABI_TAG "p")
+    endif()
+    #  n        using the STLport deprecated "native iostreams" feature
+    #           removed from the documentation in 1.43.0 but still present in
+    #           boost/config/auto_link.hpp
+    if(Boost_USE_STLPORT_DEPRECATED_NATIVE_IOSTREAMS)
+        string(APPEND _boost_RELEASE_ABI_TAG "n")
+        string(APPEND _boost_DEBUG_ABI_TAG "n")
+    endif()
+
+    #  -x86     Architecture and address model tag
+    #           First character is the architecture, then word-size, either 32 or 64
+    #           Only used in 'versioned' layout, added in Boost 1.66.0
+    set(_boost_ARCHITECTURE_TAG "")
+    # {CMAKE_CXX_COMPILER_ARCHITECTURE_ID} is not currently set for all compilers
+    if(NOT "x${CMAKE_CXX_COMPILER_ARCHITECTURE_ID}" STREQUAL "x" AND NOT Boost_VERSION VERSION_LESS 106600)
+        string(APPEND _boost_ARCHITECTURE_TAG "-")
+        # This needs to be kept in-sync with the section of CMakePlatformId.h.in
+        # inside 'defined(_WIN32) && defined(_MSC_VER)'
+        if(${CMAKE_CXX_COMPILER_ARCHITECTURE_ID} STREQUAL "IA64")
+            string(APPEND _boost_ARCHITECTURE_TAG "i")
+        elseif(${CMAKE_CXX_COMPILER_ARCHITECTURE_ID} STREQUAL "X86"
+            OR ${CMAKE_CXX_COMPILER_ARCHITECTURE_ID} STREQUAL "x64")
+            string(APPEND _boost_ARCHITECTURE_TAG "x")
+        elseif(${CMAKE_CXX_COMPILER_ARCHITECTURE_ID} MATCHES "^ARM")
+            string(APPEND _boost_ARCHITECTURE_TAG "a")
+        elseif(${CMAKE_CXX_COMPILER_ARCHITECTURE_ID} STREQUAL "MIPS")
+            string(APPEND _boost_ARCHITECTURE_TAG "m")
+        endif()
+
+        if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+            string(APPEND _boost_ARCHITECTURE_TAG "64")
+        else()
+            string(APPEND _boost_ARCHITECTURE_TAG "32")
+        endif()
+    endif()
+
     if(USE_STATIC_BOOST)
         if(MSVC)
             set(boost_LIBRARY_SUFFIX .lib)
@@ -198,46 +325,18 @@ if(NOT DISABLE_BOOST_DOWNLOAD)
     endif(USE_STATIC_BOOST)
 
     set(boost_TOOLSET_SUFFIX "")
-    if(MSVC_VERSION)
-        if(${MSVC_VERSION} EQUAL "1800")
-            set(boost_TOOLSET_SUFFIX "-vc120")
-        elseif(${MSVC_VERSION} EQUAL "1900")
-            set(boost_TOOLSET_SUFFIX "-vc140")
-        elseif(${MSVC_VERSION} VERSION_GREATER "1910")
-            set(boost_TOOLSET_SUFFIX "-vc141")
-        endif(${MSVC_VERSION} EQUAL "1800")
-    endif(MSVC_VERSION)
 
     set(boost_NAME_SUFFIX_RELEASE "")
     set(boost_NAME_SUFFIX_DEBUG "")
 
-    if(Boost_USE_MULTITHREADED)
-        set(boost_NAME_SUFFIX_RELEASE "-mt")
-        set(boost_NAME_SUFFIX_DEBUG "-mt")
-    endif(Boost_USE_MULTITHREADED)
-
-    if(Boost_USE_STATIC_RUNTIME)
-        set(boost_NAME_SUFFIX_RELEASE "${boost_NAME_SUFFIX_RELEASE}-s")
-        if(MSVC)
-            set(boost_NAME_SUFFIX_DEBUG "${boost_NAME_SUFFIX_RELEASE}-sgd")
-        else()
-            set(boost_NAME_SUFFIX_DEBUG "${boost_NAME_SUFFIX_RELEASE}-sd")
-        endif(MSVC)
-    else(Boost_USE_STATIC_RUNTIME)
-        if(MSVC)
-            set(boost_NAME_SUFFIX_DEBUG "${boost_NAME_SUFFIX_DEBUG}-gd")
-        else()
-            set(boost_NAME_SUFFIX_DEBUG "${boost_NAME_SUFFIX_DEBUG}-d")
-        endif(MSVC)
-    endif(Boost_USE_STATIC_RUNTIME)
-
-    set(boost_Name_version "")
-    if(BOOST_LAYOUT)
-        set(boost_Name_version "-${Boost_Version_Underscore}")
-    endif(BOOST_LAYOUT)
-
+    set(_boost_MULTITHREADED "-mt")
+    if(NOT Boost_USE_MULTITHREADED)
+        set(_boost_MULTITHREADED "")
+    endif()
 
     set(Boost_LIBRARIES "")
+
+    _boost_guess_compiler_prefix(boost_COMPILER)
 
     foreach(library ${Boost_Components})
         if(NOT TARGET Boost::${library})
@@ -255,21 +354,20 @@ if(NOT DISABLE_BOOST_DOWNLOAD)
             set_target_properties(Boost::${library} PROPERTIES
                 IMPORTED_LINK_INTERFACE_LANGUAGES "CXX"
                 IMPORTED_LOCATION
-                "${boost_LIB_DIR}/libboost_${library}${boost_TOOLSET_SUFFIX}${boost_NAME_SUFFIX_RELEASE}${boost_Name_version}${boost_LIBRARY_SUFFIX}")
+                "${boost_LIB_DIR}/libboost_${library}${boost_COMPILER}${_boost_MULTITHREADED}${_boost_RELEASE_ABI_TAG}${_boost_ARCHITECTURE_TAG}-${Boost_Version_Underscore}${boost_LIBRARY_SUFFIX}")
 
             set_property(TARGET Boost::${library} APPEND PROPERTY
                 IMPORTED_CONFIGURATIONS RELEASE)
             set_target_properties(Boost::${library} PROPERTIES
                 IMPORTED_LINK_INTERFACE_LANGUAGES_RELEASE "CXX"
                 IMPORTED_LOCATION_RELEASE
-                "${boost_LIB_DIR}/libboost_${library}${boost_TOOLSET_SUFFIX}${boost_NAME_SUFFIX_RELEASE}${boost_Name_version}${boost_LIBRARY_SUFFIX}")
-
+                "${boost_LIB_DIR}/libboost_${library}${boost_COMPILER}${_boost_MULTITHREADED}${_boost_RELEASE_ABI_TAG}${_boost_ARCHITECTURE_TAG}-${Boost_Version_Underscore}${boost_LIBRARY_SUFFIX}")
             set_property(TARGET Boost::${library} APPEND PROPERTY
                 IMPORTED_CONFIGURATIONS DEBUG)
             set_target_properties(Boost::${library} PROPERTIES
                 IMPORTED_LINK_INTERFACE_LANGUAGES_DEBUG "CXX"
                 IMPORTED_LOCATION_DEBUG
-                "${boost_LIB_DIR}/libboost_${library}${boost_TOOLSET_SUFFIX}${boost_NAME_SUFFIX_DEBUG}${boost_Name_version}${boost_LIBRARY_SUFFIX}")
+                "${boost_LIB_DIR}/libboost_${library}${boost_COMPILER}${_boost_MULTITHREADED}${_boost_DEBUG_ABI_TAG}${_boost_ARCHITECTURE_TAG}-${Boost_Version_Underscore}${boost_LIBRARY_SUFFIX}")
 
             add_dependencies(Boost::${library} boost_external)
             list(APPEND Boost_LIBRARIES Boost::${library})
