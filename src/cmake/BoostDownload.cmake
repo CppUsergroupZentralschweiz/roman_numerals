@@ -57,7 +57,7 @@ if(NOT DISABLE_BOOST_DOWNLOAD)
         set(BOOST_LINK_FLAGS "")
     elseif(CMAKE_COMPILER_IS_CLANGCXX)
         set(BOOST_TOOLSET "clang")
-        set(BOOST_TOOLSET_BUILD "toolset=clang")
+        set(BOOST_TOOLSET_BUILD "toolset=clang-${CMAKE_CXX_COMPILER_VERSION}")
         set(BOOST_CXX_FLAGS "cxxflags='-Wno-c99-extensions -std=c++11'")
         set(BOOST_LINK_FLAGS "")
     elseif(MSVC)
@@ -200,7 +200,10 @@ if(NOT DISABLE_BOOST_DOWNLOAD)
     # Guesses Boost's compiler prefix used in built library names
     # Returns the guess by setting the variable pointed to by _ret
     function(_boost_guess_compiler_prefix _ret)
-        if("x${CMAKE_CXX_COMPILER_ID}" STREQUAL "xIntel")
+        if("x${CMAKE_CXX_COMPILER_ID}" STREQUAL "xClang")
+            _boost_compiler_dumpversion(_boost_COMPILER_VERSION)
+            set(_boost_COMPILER "-clang${_boost_COMPILER_VERSION}")
+        elseif("x${CMAKE_CXX_COMPILER_ID}" STREQUAL "xIntel")
             if(WIN32)
                 set(_boost_COMPILER "-iw")
             else()
@@ -234,80 +237,94 @@ if(NOT DISABLE_BOOST_DOWNLOAD)
                     # on Mac OS X/Darwin is "xgcc".
                     set(_boost_COMPILER "-xgcc${_boost_COMPILER_VERSION}")
                 else()
-                    set(_boost_COMPILER "-gcc${_boost_COMPILER_VERSION}")
+                    #set(_boost_COMPILER "-gcc${_boost_COMPILER_VERSION}")
+                    set(_boost_COMPILER "-gcc")
                 endif()
             endif()
         else()
-            # TODO at least Boost_DEBUG here?
             set(_boost_COMPILER "")
         endif()
         set(${_ret} ${_boost_COMPILER} PARENT_SCOPE)
     endfunction()
 
-    set(_boost_RELEASE_ABI_TAG "-")
-    set(_boost_DEBUG_ABI_TAG "-")
-    # Key       Use this library when:
-    #  s        linking statically to the C++ standard library and
-    #           compiler runtime support libraries.
-    if(Boost_USE_STATIC_RUNTIME)
-        set(_boost_RELEASE_ABI_TAG "${_boost_RELEASE_ABI_TAG}s")
-        set(_boost_DEBUG_ABI_TAG "${_boost_DEBUG_ABI_TAG}s")
-    endif()
-    #  g        using debug versions of the standard and runtime
-    #           support libraries
-    if(WIN32 AND Boost_USE_DEBUG_RUNTIME)
-        if("x${CMAKE_CXX_COMPILER_ID}" STREQUAL "xMSVC"
-            OR "x${CMAKE_CXX_COMPILER_ID}" STREQUAL "xClang"
-            OR "x${CMAKE_CXX_COMPILER_ID}" STREQUAL "xIntel")
-            string(APPEND _boost_DEBUG_ABI_TAG "g")
+    if(("${BOOST_LAYOUT}" STREQUAL "versioned") OR ("${BOOST_LAYOUT}" STREQUAL "tagged"))
+        set(_boost_RELEASE_ABI_TAG "-")
+        set(_boost_DEBUG_ABI_TAG "-")
+        # Key       Use this library when:
+        #  s        linking statically to the C++ standard library and
+        #           compiler runtime support libraries.
+        if(Boost_USE_STATIC_RUNTIME)
+            set(_boost_RELEASE_ABI_TAG "${_boost_RELEASE_ABI_TAG}s")
+            set(_boost_DEBUG_ABI_TAG "${_boost_DEBUG_ABI_TAG}s")
         endif()
-    endif()
-    #  y        using special debug build of python
-    if(Boost_USE_DEBUG_PYTHON)
-        string(APPEND _boost_DEBUG_ABI_TAG "y")
-    endif()
-    #  d        using a debug version of your code
-    string(APPEND _boost_DEBUG_ABI_TAG "d")
-    #  p        using the STLport standard library rather than the
-    #           default one supplied with your compiler
-    if(Boost_USE_STLPORT)
-        string(APPEND _boost_RELEASE_ABI_TAG "p")
-        string(APPEND _boost_DEBUG_ABI_TAG "p")
-    endif()
-    #  n        using the STLport deprecated "native iostreams" feature
-    #           removed from the documentation in 1.43.0 but still present in
-    #           boost/config/auto_link.hpp
-    if(Boost_USE_STLPORT_DEPRECATED_NATIVE_IOSTREAMS)
-        string(APPEND _boost_RELEASE_ABI_TAG "n")
-        string(APPEND _boost_DEBUG_ABI_TAG "n")
-    endif()
-
-    #  -x86     Architecture and address model tag
-    #           First character is the architecture, then word-size, either 32 or 64
-    #           Only used in 'versioned' layout, added in Boost 1.66.0
-    set(_boost_ARCHITECTURE_TAG "")
-    # {CMAKE_CXX_COMPILER_ARCHITECTURE_ID} is not currently set for all compilers
-    if(NOT "x${CMAKE_CXX_COMPILER_ARCHITECTURE_ID}" STREQUAL "x" AND NOT Boost_VERSION VERSION_LESS 106600)
-        string(APPEND _boost_ARCHITECTURE_TAG "-")
-        # This needs to be kept in-sync with the section of CMakePlatformId.h.in
-        # inside 'defined(_WIN32) && defined(_MSC_VER)'
-        if(${CMAKE_CXX_COMPILER_ARCHITECTURE_ID} STREQUAL "IA64")
-            string(APPEND _boost_ARCHITECTURE_TAG "i")
-        elseif(${CMAKE_CXX_COMPILER_ARCHITECTURE_ID} STREQUAL "X86"
-            OR ${CMAKE_CXX_COMPILER_ARCHITECTURE_ID} STREQUAL "x64")
-            string(APPEND _boost_ARCHITECTURE_TAG "x")
-        elseif(${CMAKE_CXX_COMPILER_ARCHITECTURE_ID} MATCHES "^ARM")
-            string(APPEND _boost_ARCHITECTURE_TAG "a")
-        elseif(${CMAKE_CXX_COMPILER_ARCHITECTURE_ID} STREQUAL "MIPS")
-            string(APPEND _boost_ARCHITECTURE_TAG "m")
+        #  g        using debug versions of the standard and runtime
+        #           support libraries
+        if(WIN32 AND Boost_USE_DEBUG_RUNTIME)
+            if("x${CMAKE_CXX_COMPILER_ID}" STREQUAL "xMSVC"
+                OR "x${CMAKE_CXX_COMPILER_ID}" STREQUAL "xClang"
+                OR "x${CMAKE_CXX_COMPILER_ID}" STREQUAL "xIntel")
+                string(APPEND _boost_DEBUG_ABI_TAG "g")
+            endif()
+        endif()
+        #  y        using special debug build of python
+        if(Boost_USE_DEBUG_PYTHON)
+            string(APPEND _boost_DEBUG_ABI_TAG "y")
+        endif()
+        #  d        using a debug version of your code
+        string(APPEND _boost_DEBUG_ABI_TAG "d")
+        #  p        using the STLport standard library rather than the
+        #           default one supplied with your compiler
+        if(Boost_USE_STLPORT)
+            string(APPEND _boost_RELEASE_ABI_TAG "p")
+            string(APPEND _boost_DEBUG_ABI_TAG "p")
+        endif()
+        #  n        using the STLport deprecated "native iostreams" feature
+        #           removed from the documentation in 1.43.0 but still present in
+        #           boost/config/auto_link.hpp
+        if(Boost_USE_STLPORT_DEPRECATED_NATIVE_IOSTREAMS)
+            string(APPEND _boost_RELEASE_ABI_TAG "n")
+            string(APPEND _boost_DEBUG_ABI_TAG "n")
         endif()
 
-        if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-            string(APPEND _boost_ARCHITECTURE_TAG "64")
-        else()
-            string(APPEND _boost_ARCHITECTURE_TAG "32")
+        #  -x86     Architecture and address model tag
+        #           First character is the architecture, then word-size, either 32 or 64
+        #           Only used in 'versioned' layout, added in Boost 1.66.0
+        set(_boost_ARCHITECTURE_TAG "")
+        # {CMAKE_CXX_COMPILER_ARCHITECTURE_ID} is not currently set for all compilers
+        if(NOT "x${CMAKE_CXX_COMPILER_ARCHITECTURE_ID}" STREQUAL "x" AND NOT Boost_VERSION VERSION_LESS 106600)
+            string(APPEND _boost_ARCHITECTURE_TAG "-")
+            # This needs to be kept in-sync with the section of CMakePlatformId.h.in
+            # inside 'defined(_WIN32) && defined(_MSC_VER)'
+            if(${CMAKE_CXX_COMPILER_ARCHITECTURE_ID} STREQUAL "IA64")
+                string(APPEND _boost_ARCHITECTURE_TAG "i")
+            elseif(${CMAKE_CXX_COMPILER_ARCHITECTURE_ID} STREQUAL "X86"
+                OR ${CMAKE_CXX_COMPILER_ARCHITECTURE_ID} STREQUAL "x64")
+                string(APPEND _boost_ARCHITECTURE_TAG "x")
+            elseif(${CMAKE_CXX_COMPILER_ARCHITECTURE_ID} MATCHES "^ARM")
+                string(APPEND _boost_ARCHITECTURE_TAG "a")
+            elseif(${CMAKE_CXX_COMPILER_ARCHITECTURE_ID} STREQUAL "MIPS")
+                string(APPEND _boost_ARCHITECTURE_TAG "m")
+            endif()
+
+            if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+                string(APPEND _boost_ARCHITECTURE_TAG "64")
+            else()
+                string(APPEND _boost_ARCHITECTURE_TAG "32")
+            endif()
         endif()
-    endif()
+
+        set(_boost_MULTITHREADED "-mt")
+        if(NOT Boost_USE_MULTITHREADED)
+            set(_boost_MULTITHREADED "")
+        endif()
+
+        _boost_guess_compiler_prefix(boost_COMPILER)
+    endif(("${BOOST_LAYOUT}" STREQUAL "versioned") OR ("${BOOST_LAYOUT}" STREQUAL "tagged"))
+
+    if(("${BOOST_LAYOUT}" STREQUAL "versioned"))
+        set(_boost_Version "-${Boost_Version_Underscore}")
+    endif(("${BOOST_LAYOUT}" STREQUAL "versioned"))
+
 
     if(USE_STATIC_BOOST)
         if(MSVC)
@@ -324,19 +341,7 @@ if(NOT DISABLE_BOOST_DOWNLOAD)
 
     endif(USE_STATIC_BOOST)
 
-    set(boost_TOOLSET_SUFFIX "")
-
-    set(boost_NAME_SUFFIX_RELEASE "")
-    set(boost_NAME_SUFFIX_DEBUG "")
-
-    set(_boost_MULTITHREADED "-mt")
-    if(NOT Boost_USE_MULTITHREADED)
-        set(_boost_MULTITHREADED "")
-    endif()
-
     set(Boost_LIBRARIES "")
-
-    _boost_guess_compiler_prefix(boost_COMPILER)
 
     foreach(library ${Boost_Components})
         if(NOT TARGET Boost::${library})
@@ -354,20 +359,20 @@ if(NOT DISABLE_BOOST_DOWNLOAD)
             set_target_properties(Boost::${library} PROPERTIES
                 IMPORTED_LINK_INTERFACE_LANGUAGES "CXX"
                 IMPORTED_LOCATION
-                "${boost_LIB_DIR}/libboost_${library}${boost_COMPILER}${_boost_MULTITHREADED}${_boost_RELEASE_ABI_TAG}${_boost_ARCHITECTURE_TAG}-${Boost_Version_Underscore}${boost_LIBRARY_SUFFIX}")
+                "${boost_LIB_DIR}/libboost_${library}${boost_COMPILER}${_boost_MULTITHREADED}${_boost_RELEASE_ABI_TAG}${_boost_ARCHITECTURE_TAG}${_boost_Version}${boost_LIBRARY_SUFFIX}")
 
             set_property(TARGET Boost::${library} APPEND PROPERTY
                 IMPORTED_CONFIGURATIONS RELEASE)
             set_target_properties(Boost::${library} PROPERTIES
                 IMPORTED_LINK_INTERFACE_LANGUAGES_RELEASE "CXX"
                 IMPORTED_LOCATION_RELEASE
-                "${boost_LIB_DIR}/libboost_${library}${boost_COMPILER}${_boost_MULTITHREADED}${_boost_RELEASE_ABI_TAG}${_boost_ARCHITECTURE_TAG}-${Boost_Version_Underscore}${boost_LIBRARY_SUFFIX}")
+                "${boost_LIB_DIR}/libboost_${library}${boost_COMPILER}${_boost_MULTITHREADED}${_boost_RELEASE_ABI_TAG}${_boost_ARCHITECTURE_TAG}${_boost_Version}${boost_LIBRARY_SUFFIX}")
             set_property(TARGET Boost::${library} APPEND PROPERTY
                 IMPORTED_CONFIGURATIONS DEBUG)
             set_target_properties(Boost::${library} PROPERTIES
                 IMPORTED_LINK_INTERFACE_LANGUAGES_DEBUG "CXX"
                 IMPORTED_LOCATION_DEBUG
-                "${boost_LIB_DIR}/libboost_${library}${boost_COMPILER}${_boost_MULTITHREADED}${_boost_DEBUG_ABI_TAG}${_boost_ARCHITECTURE_TAG}-${Boost_Version_Underscore}${boost_LIBRARY_SUFFIX}")
+                "${boost_LIB_DIR}/libboost_${library}${boost_COMPILER}${_boost_MULTITHREADED}${_boost_DEBUG_ABI_TAG}${_boost_ARCHITECTURE_TAG}${_boost_Version}${boost_LIBRARY_SUFFIX}")
 
             add_dependencies(Boost::${library} boost_external)
             list(APPEND Boost_LIBRARIES Boost::${library})
